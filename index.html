@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1">
+		<title>chopchoplime: Service Status</title>
+		<style>
+			/*
+				$blue: #276fbf;
+				$red: #f03a47;
+				$yellow: #ffbf00;
+				$green: #32936f;
+			*/
+			* {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
+			body {
+				font: 1em/1.5 sans-serif;
+				margin: 1.5rem;
+			}
+			h1,
+			h2 {
+				margin: 1.5rem 0;
+			}
+			li {
+				margin-left: 1.25rem;
+				list-style: disc outside none;
+			}
+			p {
+				display: inline;
+				padding: 0.5rem;
+			}
+			#maintenance {
+				font-weight: bold;
+				background-color: #276fbf;
+				color: white;
+				display: none;
+			}
+			.good {
+				background-color: #32936f;
+				color: white;
+			}
+			.bad {
+				background-color: #f03a47;
+				color: white;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>chopchoplime: Service Status</h1>
+		<p id="maintenance">One or more services may be unavailable due to maintenance.</p>
+		<h2>api.chopchoplime.com</h2>
+		<p id="api-status">Loading…</p>
+		<h2>www.chopchoplime.com</h2>
+		<p id="www-status">Loading…</p>
+		<h2>admin.chopchoplime.com</h2>
+		<p id="admin-status">Loading…</p>
+		<script>
+			function update(id, text, className) {
+				const element = document.getElementById(id);
+				element.textContent = text;
+				element.className = className;
+			}
+			function check(url, id) {
+				window.fetch(url, { cache: 'no-store' })
+					.then(function (response) {
+						if (response.status === 200) {
+							update(id, 'Status: OK', 'good');
+						}
+						else {
+							throw (response.statusText || response.status)
+						}
+					})
+					.catch(function (error) {
+						update(id, 'Error: ' + (error.message ?? error), 'bad');
+					});
+			}
+			function checkAll() {
+				check('https://api.chopchoplime.com/', 'api-status');
+				check('https://www.chopchoplime.com/', 'www-status');
+				check('https://admin.chopchoplime.com/', 'admin-status');
+				window.fetch('https://chopchoplime-status.s3.us-east-2.amazonaws.com/maintenance.json', { cache: 'no-store' })
+					.then(function (response) {
+						response.json()
+							.then(function(json) {
+								if (json) {
+									document.getElementById('maintenance').style.display = 'inline';
+								}
+							})
+					});
+			}
+			window.setInterval(checkAll, 60000);
+			checkAll();
+		</script>
+	</body>
+</html>
